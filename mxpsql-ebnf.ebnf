@@ -1,0 +1,73 @@
+(**
+ MXPSQL Simple EBNF
+ 
+ This EBNF Grammar contains minimalistic quality of life extensions by MXPSQL.
+ It was first written in January 13, 2023.
+ 
+ 
+ 
+ Behaviour of symbols based of ISO/IEC 14977
+  * repetition-symbol
+  - except-symbol
+  , concatenate-symbol
+  | definition-separator-symbol
+  = defining-symbol
+  ; terminator-symbol
+  . terminator-symbol
+ 
+ 
+ 
+ 
+ Example:
+ 
+   # A string defined in MXPSQL's EBNF
+   char = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+          | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+          | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+          | "V" | "W" | "X" | "Y" | "Z" | "a" | "b"
+          | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+          | "j" | "k" | "l" | "m" | "n" | "o" | "p"
+          | "q" | "r" | "s" | "t" | "u" | "v" | "w"
+          | "x" | "y" | "z" ;
+   digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+   @include "symbol.ebnf"; # Include the directive "symbol" from the file "symbol.ebnf"
+   string = [{ char | digit | symbol }] ;
+
+*)
+
+
+letter = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+       | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+       | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+       | "V" | "W" | "X" | "Y" | "Z" | "a" | "b"
+       | "c" | "d" | "e" | "f" | "g" | "h" | "i"
+       | "j" | "k" | "l" | "m" | "n" | "o" | "p"
+       | "q" | "r" | "s" | "t" | "u" | "v" | "w"
+       | "x" | "y" | "z" ;
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+symbol = "[" | "]" | "{" | "}" | "(" | ")" | "<" | ">"
+       | "'" | '"' | "=" | "|" | "." | "," | ";" ;
+character = letter | digit | symbol | "_" ;
+ 
+identifier = letter , { letter | digit | "_" } ;
+terminal = "'" , character - "'" , { character - "'" } , "'" 
+         | '"' , character - '"' , { character - '"' } , '"' ;
+
+(* The star of MXPSQL Simple EBNF, these extensions. *)
+singlelinecomment = "#" ;
+directivemarker = "@", { letter | digit | "_" | symbol }, ( " " | "   " ), { letter | digit | "_" | symbol} ; (* Example => @include "blah.ebnf", @randomdirective "a total joke.txt" *)
+extensioncontrols = [ singlelinecomment | directivemarker ] ;
+
+lhs = identifier ;
+rhs = identifier
+     | terminal
+     | "[" , rhs , "]"
+     | "{" , rhs , "}"
+     | "(" , rhs , ")"
+     | "?", identifier, "?"
+     | rhs , "|" , rhs
+     | rhs , "," , rhs ;
+
+rule = lhs , "=" , rhs , ";", singlelinecomment ;
+statement = extensioncontrols, ";" | [singlelinecomment] rules;
+grammar = { statement } ; (* Ultimate one *)
