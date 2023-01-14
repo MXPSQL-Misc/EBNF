@@ -1,7 +1,7 @@
 (**
  MXPSQL Simple EBNF
  
- This EBNF Grammar contains minimalistic quality of life extensions by MXPSQL.
+ This EBNF Grammar contains minimalistic quality of life extensions by MXPSQL. Basically my version of EBNF.
  It was first written in January 13, 2023.
  Licensed under the MIT License.
 
