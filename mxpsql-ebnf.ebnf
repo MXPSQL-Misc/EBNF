@@ -85,12 +85,12 @@ extensioncontrols = [ singlelinecomment | directivemarker ] ;
 lhs = identifier ;
 rhs = identifier
      | terminal
-     | "[" , rhs , "]"
-     | "{" , rhs , "}"
-     | "(" , rhs , ")"
-     | "?", identifier, "?" (* The special sequence *)
-     | rhs , "|" , rhs
-     | rhs , "," , rhs ;
+     | ( "[" , rhs , "]" )
+     | ( "{" , rhs , "}" )
+     | ( "(" , rhs , ")" )
+     | ( "?", identifier, "?" ) (* The special sequence *)
+     | ( rhs , "|" , rhs )
+     | ( rhs , "," , rhs ) ;
 
 rule = lhs , "=" , rhs , ";", singlelinecomment ;
 statement = ( extensioncontrols, ";" ) | ( [singlelinecomment], rules );
