@@ -1,0 +1,13 @@
+(**
+ A dumb config in EBNF? Very simple but yeah
+*)
+
+string = ? all visible characters ? ;
+
+pair = string, "=", string ;
+comment = "#", ( string | pair ) ;
+
+config = { 
+    ( comment | pair ), 
+    ? newline ? 
+} ;

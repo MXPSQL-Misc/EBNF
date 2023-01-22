@@ -1,7 +1,7 @@
 (**
  MXPSQL Simple EBNF
  
- This EBNF Grammar contains minimalistic quality of life extensions by MXPSQL. Basically my version of EBNF.
+ This EBNF Grammar contains slightly minimalistic quality of life extensions by MXPSQL. Basically my version of EBNF.
  It was first written in January 13, 2023.
  Licensed under the MIT License.
 
@@ -52,10 +52,10 @@
           | "c" | "d" | "e" | "f" | "g" | "h" | "i"
           | "j" | "k" | "l" | "m" | "n" | "o" | "p"
           | "q" | "r" | "s" | "t" | "u" | "v" | "w"
-          | "x" | "y" | "z" ;
-   digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+          | "x" | "y" | "z" ; # EBNF style assignment
+   digit := "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ; # Walrus style assignment
    @include "symbol.ebnf"; # Include the identifier "symbol" from the file "symbol.ebnf"
-   string = [{ char | digit | symbol }] ;
+   string ::= [{ char | digit | symbol }] ; # BNF style assignment
 
 *)
 
@@ -68,30 +68,46 @@ letter = "A" | "B" | "C" | "D" | "E" | "F" | "G"
        | "j" | "k" | "l" | "m" | "n" | "o" | "p"
        | "q" | "r" | "s" | "t" | "u" | "v" | "w"
        | "x" | "y" | "z" ;
-digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+digit_excluding_zero = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+digit = "0" | digit_excluding_zero ;
 symbol = "[" | "]" | "{" | "}" | "(" | ")" | "<" | ">"
        | "'" | '"' | "=" | "|" | "." | "," | ";" ;
 character = letter | digit | symbol | "_" ;
  
 identifier = letter , { letter | digit | "_" } ;
-terminal = "'" , character - "'" , { character - "'" } , "'" 
-         | '"' , character - '"' , { character - '"' } , '"' ;
+terminal = ( "'" , character - "'" , { character - "'" } , "'"  )
+         | ( '"' , character - '"' , { character - '"' } , '"' ) ;
+
+number = digit_excluding_zero, { digit };
+all_characters = ? all visible characters ? | character ;
+string = { all_characters } ;
+quoted_string = ( '"', string, '"' ) 
+         | ( "'", string, "'" );
+
+(* EBNF comments *)
+start_comment = "(*" ;
+end_comment = "*)" ;
+multiline_comment = start_comment, string, end_comment;
 
 (* The star of MXPSQL Simple EBNF, these extensions. *)
-singlelinecomment = "#" ;
-directivemarker = "@", { letter | digit | "_" | symbol }, ( " " | "   " ), { letter | digit | "_" | symbol} ; (* Example => @include "blah.ebnf", @randomdirective "a total joke.txt" *)
-extensioncontrols = [ singlelinecomment | directivemarker ] ;
+singleline_comment = "#", string ;
+directivemarker = "@", string, ( " " | "   " ), { string | quoted_string } ; (* Example => @include "blah.ebnf", @randomdirective "a total joke.txt" *)
+extensions = [ singleline_comment | directivemarker ] ;
+
+(* Groupings *)
+comment = multiline_comment | singleline_comment ;
 
 lhs = identifier ;
 rhs = identifier
      | terminal
-     | "[" , rhs , "]"
-     | "{" , rhs , "}"
-     | "(" , rhs , ")"
-     | "?", identifier, "?" (* The special sequence *)
-     | rhs , "|" , rhs
-     | rhs , "," , rhs ;
+     | ( number, "*", rhs ) (* Repetition *)
+     | ( "[" , rhs , "]" )
+     | ( "{" , rhs , "}" )
+     | ( "(" , rhs , ")" )
+     | ( "?", string, "?" ) (* The special sequence *)
+     | ( rhs , ( "|" | "/" ) , rhs ) (* Slightly more powerful with "/" *)
+     | ( rhs , "," , rhs ) ;
 
-rule = lhs , "=" , rhs , ";", singlelinecomment ;
-statement = ( extensioncontrols, ";" ) | ( [singlelinecomment], rules );
-grammar = { ( "(*", rhs, "*)" ) | statement } ; (* Ultimate one *)
+rule = lhs , ( "::=" | ":=" | "=" ) , rhs , ";", comment ; (* Multiple assignment and comments *)
+statement = ( extensions, ";" ) | rules ;
+grammar = { comment | statement } ; (* Ultimate one: The grammar ruleset *)
