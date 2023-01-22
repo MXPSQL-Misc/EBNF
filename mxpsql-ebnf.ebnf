@@ -100,12 +100,20 @@ comment = multiline_comment | singleline_comment ;
 lhs = identifier ;
 rhs = identifier
      | terminal
+<<<<<<< HEAD
      | ( number, "*", rhs ) (* Repetition *)
      | ( "[" , rhs , "]" )
      | ( "{" , rhs , "}" )
      | ( "(" , rhs , ")" )
      | ( "?", string, "?" ) (* The special sequence *)
      | ( rhs , ( "|" | "/" ) , rhs ) (* Slightly more powerful with "/" *)
+=======
+     | ( "[" , rhs , "]" )
+     | ( "{" , rhs , "}" )
+     | ( "(" , rhs , ")" )
+     | ( "?", identifier, "?" ) (* The special sequence *)
+     | ( rhs , "|" , rhs )
+>>>>>>> 8bcb550bd6f3f31ff99a094ea9a36f083b4b73b3
      | ( rhs , "," , rhs ) ;
 
 rule = lhs , ( "::=" | ":=" | "=" ) , rhs , ";", comment ; (* Multiple assignment and comments *)
