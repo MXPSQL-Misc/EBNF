@@ -4,6 +4,8 @@
 
 import os, sys, argparse, io, shlex
 
+__all__ = ["MEBNFError", "MEBNFBadDirectiveError", "MEBNFBadSyntaxError", "preprocess"]
+
 class MEBNFError(ValueError):
     pass
 
