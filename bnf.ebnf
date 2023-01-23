@@ -1,0 +1,15 @@
+(**
+ BNF in EBNF
+
+ Translated from WSN to https://en.wikipedia.org/wiki/Wirth_syntax_notation#Another_example
+*)
+
+ syntax         = rule, [ syntax ] ;
+ rule           = opt_whitespace, "<", rule_name, ">", opt_whitespace, "::=" 
+                  opt_whitespace, expression, line_end ;
+ opt_whitespace = { " " } ;
+ expression     = list, [ "|", expression ] ;
+ line_end       = ( opt-whitespace, ? EOL character ? )  | ( line_end, line_end ) ;
+ list           = term, [ opt-whitespace, list ] ;
+ term           = literal | ( "<", rule_name, ">" ) ;
+ literal        = ( '"' text '"' ) | ( "'" text "'" ) ;

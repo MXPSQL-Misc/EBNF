@@ -53,7 +53,7 @@
           | "j" | "k" | "l" | "m" | "n" | "o" | "p"
           | "q" | "r" | "s" | "t" | "u" | "v" | "w"
           | "x" | "y" | "z" ; # EBNF style assignment
-   digit := "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ; # Walrus style assignment
+   digit := "0" / "1" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9" ; # Walrus style assignment
    @include "symbol.ebnf"; # Include the identifier "symbol" from the file "symbol.ebnf"
    string ::= [{ char | digit | symbol }] ; # BNF style assignment
 
@@ -79,7 +79,7 @@ terminal = ( "'" , character - "'" , { character - "'" } , "'"  )
          | ( '"' , character - '"' , { character - '"' } , '"' ) ;
 
 number = digit_excluding_zero, { digit };
-all_characters = ? all visible characters ? | character ;
+all_characters = ( ? all visible characters ? ) | character ;
 string = { all_characters } ;
 quoted_string = ( '"', string, '"' ) 
          | ( "'", string, "'" );
@@ -92,7 +92,7 @@ multiline_comment = start_comment, string, end_comment;
 (* The star of MXPSQL Simple EBNF, these extensions. *)
 singleline_comment = "#", string ;
 directivemarker = "@", string, ( " " | "   " ), { string | quoted_string } ; (* Example => @include "blah.ebnf", @randomdirective "a total joke.txt" *)
-extensions = [ singleline_comment | directivemarker ] ;
+extensions = ( singleline_comment | directivemarker ) ;
 
 (* Groupings *)
 comment = multiline_comment | singleline_comment ;
@@ -108,6 +108,6 @@ rhs = identifier
      | ( rhs , ( "|" | "/" ) , rhs ) (* Slightly more powerful with "/" *)
      | ( rhs , "," , rhs ) ;
 
-rule = lhs , ( "::=" | ":=" | "=" ) , rhs , ";", comment ; (* Multiple assignment and comments *)
-statement = ( extensions, ";" ) | rules ;
+rule = lhs , ( "::=" | ":=" | "=" ) , rhs , ";", [ comment ] ; (* Multiple assignment and comments *)
+statement = ( extensions, ";" ) | rules ; (* one line, maybe *)
 grammar = { comment | statement } ; (* Ultimate one: The grammar ruleset *)
