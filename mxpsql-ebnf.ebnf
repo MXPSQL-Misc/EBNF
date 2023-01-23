@@ -99,11 +99,13 @@ comment = multiline_comment | singleline_comment ;
 
 lhs = identifier ;
 rhs = identifier
-     | terminal
+     | terminal (* Terminal Character *)
+     | ( "<", string, ">" ) (* Ranges *)
+     | ( "~R", quoted_string, "R~") (* Regex *)
      | ( number, "*", rhs ) (* Repetition *)
-     | ( "[" , rhs , "]" )
-     | ( "{" , rhs , "}" )
-     | ( "(" , rhs , ")" )
+     | ( "[" , rhs , "]" ) (* Optional *)
+     | ( "{" , rhs , "}" ) (* Repetition *)
+     | ( "(" , rhs , ")" ) (* Grouping *)
      | ( "?", string, "?" ) (* The special sequence *)
      | ( rhs , ( "|" | "/" ) , rhs ) (* Slightly more powerful with "/" *)
      | ( rhs , "," , rhs ) ;
