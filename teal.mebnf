@@ -1,0 +1,6 @@
+(* Amalgation Teal: An example for MXPSQL-EBNF, THE ONLY ONE *)
+@include "mxpsql-ebnf.ebnf"
+@include "config.ebnf"
+@include "integer.ebnf"
+@include "isoebnf.ebnf"
+@include "bnf.ebnf"

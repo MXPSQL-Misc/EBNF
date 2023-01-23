@@ -4,7 +4,17 @@
 
 import os, sys, argparse, io, shlex
 
-def preprocess(mebnf : str, strict=False):
+class MEBNFError(ValueError):
+    pass
+
+class MEBNFBadDirectiveError(MEBNFError):
+    pass
+
+class MEBNFBadSyntaxError(MEBNFError, SyntaxError):
+    pass
+
+# API
+def preprocess(mebnf : str, strict=False, descriptive=True):
     mebnf_workspace = io.StringIO()
 
     for linenumber, line in enumerate(mebnf.splitlines()):
@@ -14,23 +24,25 @@ def preprocess(mebnf : str, strict=False):
             tok = shlex.split(line)
             toks = len(tok)
             if toks < 1:
-                raise ValueError("Bad MXPSQL-EBNF directive.")
+                raise MEBNFBadSyntaxError("Bad MXPSQL-EBNF directive.")
 
             directive = tok[0]
             if directive == "include":
                 if toks < 2:
-                    raise ValueError("Missing arguments for include directive")
+                    raise MEBNFBadDirectiveError("Missing arguments for include directive")
 
                 include = ""
+                if descriptive:
+                    include += f"(* INCLUDE FROM: {tok[1]} *)\n"
                 with open(tok[1], "rb") as fs:
-                    include = fs.read().decode("ascii")
+                    include += fs.read().decode("ascii")
 
-                mebnf_workspace.write(include)
+                mebnf_workspace.write(include+"\n")
             else:
                 if strict:
-                    raise ValueError(f"Unrecognized directive: {tok[0]}")
+                    raise MEBNFBadDirectiveError(f"Unrecognized directive: {tok[0]}")
         else:
-            mebnf_workspace.write(line)
+            mebnf_workspace.write(line+"\n")
 
     return mebnf_workspace.getvalue()
 
@@ -54,8 +66,8 @@ def main(argv : list[str]):
 
     mebnf_out = preprocess(mebnf)
     if args.ofi:
-        with open(args.ofi, "rb") as f:
-            f.write(mebnf_out)
+        with open(args.ofi, "wb") as f:
+            f.write(bytes(mebnf_out, "ascii"))
     else:
         print(mebnf_out, file=sys.stdout)
 
