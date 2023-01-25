@@ -91,7 +91,7 @@ multiline_comment = start_comment, string, end_comment;
 
 (* The star of MXPSQL Simple EBNF, these extensions. *)
 singleline_comment = "#", string ;
-directivemarker = "@", string, ( " " | "   " ), { string | quoted_string } ; (* Example => @include "blah.ebnf", @randomdirective "a total joke.txt" *)
+directivemarker = "@", string, ( " " | "   " ), { quoted_string } ; (* Example => @include "blah.ebnf", @randomdirective "a total joke.txt" *)
 extensions = ( singleline_comment | directivemarker ) ;
 
 (* Groupings *)
@@ -101,14 +101,17 @@ lhs = identifier ;
 rhs = identifier
      | terminal (* Terminal Character *)
      | ( "<", string, ">" ) (* Ranges *)
-     | ( "~R", quoted_string, "R~") (* Regex *)
-     | ( number, "*", rhs ) (* Repetition *)
+     | ( "~R", string, "R~") (* Regex *)
+     | ( ( [ number ] , "$", [ number ], rhs ) - ( "$", rhs ) ) (* Listing *)
+     | ( ( [ number ] , "*", [ number ], rhs ) - ( "*", rhs ) ) (* Repetition *)
+     | ( [ number ], "%", rhs ) (* Specific repetition *)
      | ( "[" , rhs , "]" ) (* Optional *)
      | ( "{" , rhs , "}" ) (* Repetition *)
      | ( "(" , rhs , ")" ) (* Grouping *)
      | ( "?", string, "?" ) (* The special sequence *)
      | ( rhs , ( "|" | "/" ) , rhs ) (* Slightly more powerful with "/" *)
-     | ( rhs , "," , rhs ) ;
+     | ( rhs , "," , rhs ) (* Concatenation *)
+     | ( rhs, "+" ) (* More than once *) ;
 
 rule = lhs , ( "::=" | ":=" | "=" ) , rhs , ";", [ comment ] ; (* Multiple assignment and comments *)
 statement = ( extensions, ";" ) | rules ; (* one line, maybe *)
