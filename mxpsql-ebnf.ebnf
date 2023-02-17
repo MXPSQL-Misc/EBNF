@@ -60,59 +60,64 @@
 *)
 
 
-letter = "A" | "B" | "C" | "D" | "E" | "F" | "G"
+letter = ( "A" | "B" | "C" | "D" | "E" | "F" | "G"
        | "H" | "I" | "J" | "K" | "L" | "M" | "N"
        | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
        | "V" | "W" | "X" | "Y" | "Z" | "a" | "b"
        | "c" | "d" | "e" | "f" | "g" | "h" | "i"
        | "j" | "k" | "l" | "m" | "n" | "o" | "p"
        | "q" | "r" | "s" | "t" | "u" | "v" | "w"
-       | "x" | "y" | "z" ;
-digit_excluding_zero = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
-digit = "0" | digit_excluding_zero ;
-symbol = "[" | "]" | "{" | "}" | "(" | ")" | "<" | ">"
-       | "'" | '"' | "=" | "|" | "." | "," | ";" ;
-character = letter | digit | symbol | "_" ;
+       | "x" | "y" | "z" ) ;
+digit_excluding_zero = ( "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ) ;
+digit = ( "0" | digit_excluding_zero ) ;
+symbol = ( "[" | "]" | "{" | "}" | "(" | ")" | "<" | ">"
+       | "'" | '"' | "=" | "|" | "." | "," | ";" ) ;
+character = ( letter | digit | symbol | "_" ) ;
  
-identifier = letter , { letter | digit | "_" } ;
-terminal = ( "'" , character - "'" , { character - "'" } , "'"  )
-         | ( '"' , character - '"' , { character - '"' } , '"' ) ;
+identifier = ( letter , { letter | digit | "_" } ) ;
+terminal = ( ( "'" , character - "'" , { character - "'" } , "'"  )
+         | ( '"' , character - '"' , { character - '"' } , '"' ) ) ;
 
-number = digit_excluding_zero, { digit };
-all_characters = ( ? all visible characters ? ) | character ;
+number = ( digit_excluding_zero, { digit } ) ;
+all_characters = ( ( ? all visible characters ? ) | character ) ;
 string = { all_characters } ;
-quoted_string = ( '"', string, '"' ) 
-         | ( "'", string, "'" );
+quoted_string = ( ( '"', string, '"' ) 
+         | ( "'", string, "'" ) ) ;
 
 (* EBNF comments *)
 start_comment = "(*" ;
 end_comment = "*)" ;
-multiline_comment = start_comment, string, end_comment;
+multiline_comment = ( start_comment, string, end_comment ) ;
 
-(* The star of MXPSQL Simple EBNF, these extensions. *)
+(* The star of MXPSQL Simple EBNF, these extensions. * )
 singleline_comment = "#", string ;
 directivemarker = "@", string, ( " " | "   " ), { quoted_string } ; (* Example => @include "blah.ebnf", @randomdirective "a total joke.txt" *)
 extensions = ( singleline_comment | directivemarker ) ;
 
 (* Groupings *)
-comment = multiline_comment | singleline_comment ;
+comment = ( multiline_comment | singleline_comment ) ;
 
 lhs = identifier ;
-rhs = identifier
+rhs = ( identifier
      | terminal (* Terminal Character *)
      | ( "<", string, ">" ) (* Ranges *)
-     | ( "~R", string, "R~") (* Regex *)
+     | ( "~", string, "~") (* Regex *)
      | ( ( [ number ] , "$", [ number ], rhs ) - ( "$", rhs ) ) (* Listing *)
      | ( ( [ number ] , "*", [ number ], rhs ) - ( "*", rhs ) ) (* Repetition *)
-     | ( [ number ], "%", rhs ) (* Specific repetition *)
+     | ( number, "%%", rhs ) (* Specific listing *)
+     | (( number , "%", rhs ) - ( number, "%%", rhs )) (* Specific repetition *)
      | ( "[" , rhs , "]" ) (* Optional *)
      | ( "{" , rhs , "}" ) (* Repetition *)
      | ( "(" , rhs , ")" ) (* Grouping *)
      | ( "?", string, "?" ) (* The special sequence *)
      | ( rhs , ( "|" | "/" ) , rhs ) (* Slightly more powerful with "/" *)
      | ( rhs , "," , rhs ) (* Concatenation *)
-     | ( rhs, "+" ) (* More than once *) ;
+     | ( rhs, "+" ) (* More than once *)
+     | ( rhs, "&", rhs ) (* AND operation (Only include the right hand side of this expression if available) *)
+     | ( rhs, "-", rhs ) (* Exceptions (It excludes the right hand side of this expression) *)
+     | ( rhs, "^", rhs ) (* TBA *) 
+     ) ;
 
-rule = lhs , ( "::=" | ":=" | "=" ) , rhs , ";", [ comment ] ; (* Multiple assignment and comments *)
-statement = ( extensions, ";" ) | rules ; (* one line, maybe *)
-grammar = { comment | statement } ; (* Ultimate one: The grammar ruleset *)
+rule = ( lhs , ( "::=" | ":=" | "=" ) , rhs , ( ";" | "." ), [ comment ] ) ; (* Multiple assignment and comments *)
+statement = ( extensions | rules ) ; (* one line, maybe *)
+grammar = { ( comment | statement ) } ; (* Ultimate one: The grammar ruleset *)

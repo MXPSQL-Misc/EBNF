@@ -7,16 +7,19 @@ import os, sys, argparse, io, shlex
 __all__ = ["MEBNFError", "MEBNFBadDirectiveError", "MEBNFBadSyntaxError", "preprocess"]
 
 class MEBNFError(ValueError):
+    """Base class for errors related to MEBNF/MXPSQL-EBNF"""
     pass
 
-class MEBNFBadDirectiveError(MEBNFError):
+class MEBNFBadDirectiveError(MEBNFError, TypeError):
+    """Indicates that an invalid/bad directive has been provided"""
     pass
 
 class MEBNFBadSyntaxError(MEBNFError, SyntaxError):
+    """Indicates a syntactical error"""
     pass
 
 # API
-def preprocess(mebnf : str, *, recursive : bool =False, descriptive : bool =True, strict : bool =False) -> str:
+def preprocess(mebnf : str, *, recursive : bool=False, descriptive : bool=True, strict : bool=False) -> str:
     """
     The MXPSQL-EBNF preprocessor function.
 
@@ -60,6 +63,7 @@ def preprocess(mebnf : str, *, recursive : bool =False, descriptive : bool =True
     return mebnf_workspace.getvalue()
 
 def main(argv : list[str]):
+    """Main function"""
     parser = argparse.ArgumentParser(
         prog=__file__,
         description="MXPSQL-EBNF preprocessor that outputs an EBNF file"
@@ -81,7 +85,7 @@ def main(argv : list[str]):
     mebnf_out = preprocess(mebnf)
     
     if args.ofi:
-        if args.ovw and os.path.isfile(args.ofi):
+        if not args.ovw and os.path.isfile(args.ofi):
             raise ValueError("Refuse to overwrite a file")
 
         with open(args.ofi, "wb") as f:
