@@ -1,0 +1,9 @@
+(* S-expressions in EBNF: Symbolic Expressions *)
+
+Chars = ? all visible chars ? ;
+
+String = [ { Chars } ] ;
+
+SymbolicExpression = ( '(', ( String | SymbolicExpression ), ',' ( String | SymbolicExpression ), ')' );
+
+Rule_SymbolicExpressions =  { SymbolicExpression} ;
