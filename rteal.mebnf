@@ -1,0 +1,7 @@
+(* teal.mebnf only if it was repeated *)
+
+@include "teal.mebnf"
+@include "teal.mebnf"
+@include "teal.mebnf"
+@include "teal.mebnf"
+@include "teal.mebnf"

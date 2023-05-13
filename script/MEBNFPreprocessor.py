@@ -2,7 +2,7 @@
 # MXPSQL-EBNF preprocessor
 # Incomplete, but can deal with directives
 
-import os, sys, argparse, io, shlex
+import os, sys, argparse, io, shlex, typing
 
 __all__ = ["MEBNFError", "MEBNFBadDirectiveError", "MEBNFBadSyntaxError", "preprocess"]
 
@@ -15,17 +15,38 @@ class MEBNFBadDirectiveError(MEBNFError):
 class MEBNFBadSyntaxError(MEBNFError, SyntaxError):
     pass
 
+
+# Internals
+
 # API
-def preprocess(mebnf : str, *, recursive : bool =False, descriptive : bool =True, strict : bool =False) -> str:
+def preprocess(mebnf : str, namespace : typing.Optional[str] = None, *, recursive : bool =False, descriptive : bool =True, strict : bool =False) -> str:
     """
     The MXPSQL-EBNF preprocessor function.
 
-    Do not set to recursive to True, it is broken and will cause a stack overflow.
+    It only converts MXPSQL-EBNF to normal (sometimes invalid) EBNF.
     """
     mebnf_workspace = io.StringIO()
 
-    def do_work():
-        for _linenumber, line in enumerate(mebnf.splitlines()):
+    processed_files = set()  # Set to store the names of processed files
+
+    def do_work(input_mebnf, current_file):
+        # Check if the current file has already been processed
+        cf = ""
+        if (current_file is not None):
+            cf = os.path.realpath(current_file)
+            if cf in processed_files:
+                return f"(* ALREADY INCLUDED: {current_file} *)"
+
+        # Add the current file to the set of processed files
+        processed_files.add(cf)
+
+        for _linenumber, line in enumerate(input_mebnf.splitlines()):
+            # comment processor 1
+            if line.startswith("#"):
+                comment = f"(* {line[1:]} *)"
+                mebnf_workspace.write(comment + "\n")
+                continue
+
             # directive processor
             if len(line) > 0 and line[0] == "@":
                 line = line[1:]
@@ -38,24 +59,28 @@ def preprocess(mebnf : str, *, recursive : bool =False, descriptive : bool =True
                 if directive == "include":
                     if toks < 2:
                         raise MEBNFBadDirectiveError("Missing arguments for include directive")
-                    
+
+                    include_file = tok[1]
+                    if include_file in processed_files:
+                        continue  # Skip processing if the included file has already been processed
+
                     include = ""
                     if descriptive:
-                        include += f"(* INCLUDE FROM: {tok[1]} *)\n"
-                    with open(tok[1], "rb") as fs:
+                        include += f"(* INCLUDE FROM: {include_file} *)\n"
+                    with open(include_file, "rb") as fs:
                         include += fs.read().decode("ascii")
 
                     if recursive:
-                        include = preprocess(mebnf, recursive=recursive, descriptive=descriptive, strict=strict)
+                        include = do_work(include, include_file)
 
-                    mebnf_workspace.write(include+"\n")
+                    mebnf_workspace.write(str(include) + "\n")
                 else:
                     if strict:
                         raise MEBNFBadDirectiveError(f"Unrecognized directive: {tok[0]}")
             else:
-                mebnf_workspace.write(line+"\n")
+                mebnf_workspace.write(str(line) + "\n")
 
-    do_work()
+    do_work(mebnf, namespace)  # Start with the main file
 
     return mebnf_workspace.getvalue()
 
@@ -64,9 +89,9 @@ def main(argv : list[str]):
         prog=__file__,
         description="MXPSQL-EBNF preprocessor that outputs an EBNF file"
     )
-    parser.add_argument("-if", "--input-file", dest="ifi", type=str, help="file to process")
-    parser.add_argument("-of", "--output-file", dest="ofi", type=str, help="output filename")
-    parser.add_argument("-ovw", "--overwrite", dest="ovw", action="store_true", help="overwrite a file?")
+    parser.add_argument("-f", "--input-file", dest="ifi", type=str, help="file to process")
+    parser.add_argument("-o", "--output-file", dest="ofi", type=str, help="output filename")
+    parser.add_argument("-w", "--overwrite", dest="ovw", action="store_true", help="overwrite a file?")
 
     args = parser.parse_args(argv)
 
@@ -78,7 +103,7 @@ def main(argv : list[str]):
         print("Input yout script into stdin...", file=sys.stderr)
         mebnf = sys.stdin.read()
 
-    mebnf_out = preprocess(mebnf)
+    mebnf_out = preprocess(mebnf, args.ifi, recursive=True)
     
     if args.ofi:
         if args.ovw and os.path.isfile(args.ofi):

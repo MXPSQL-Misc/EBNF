@@ -101,13 +101,14 @@ lhs = identifier ;
 rhs = identifier
      | terminal (* Terminal Character *)
      | ( "<", string, ">" ) (* Ranges *)
-     | ( "~R", string, "R~") (* Regex *)
+     | ( "~&", string, "&~") (* Regex *)
      | ( ( [ number ] , "$", [ number ], rhs ) - ( "$", rhs ) ) (* Listing *)
      | ( ( [ number ] , "*", [ number ], rhs ) - ( "*", rhs ) ) (* Repetition *)
      | ( [ number ], "%", rhs ) (* Specific repetition *)
      | ( "[" , rhs , "]" ) (* Optional *)
      | ( "{" , rhs , "}" ) (* Repetition *)
-     | ( "(" , rhs , ")" ) (* Grouping *)
+     | ( "(" , rhs , ")" ) (* Grouping *),
+     | ( rhs, "(", rhs, ")" ) (* Special grouping planned where an identifer can be placed before a group without a comma *)
      | ( "?", string, "?" ) (* The special sequence *)
      | ( rhs , ( "|" | "/" ) , rhs ) (* Slightly more powerful with "/" *)
      | ( rhs , "," , rhs ) (* Concatenation *)
