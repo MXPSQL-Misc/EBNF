@@ -2,12 +2,15 @@
  A dumb config in EBNF? Very simple but yeah
 *)
 
-string = ? all visible characters ? ;
+character = ? any character except '"' ? | escape_sequence ;
+escape_sequence = '\\' , ( '"' | '\\' | 'n' | 'r' | 'a' | character ) ;
+stringbit = '"' , { character | escape_sequence } , '"' ;
+string = stringbit;
 
 pair = string, "=", string ;
 comment = "#", ( string | pair ) ;
 
 config = { 
-    ( comment | pair ), 
+    ( comment | ( pair, comment ) ), 
     ? newline ? 
 } ;

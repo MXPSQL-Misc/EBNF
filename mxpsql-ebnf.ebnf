@@ -119,6 +119,9 @@ rhs = ( identifier
      | ( rhs, "^", rhs ) (* TBA *) 
      ) ;
 
-rule = ( lhs , ( "::=" | ":=" | "=" ) , rhs , ( ";" | "." ), [ comment ] ) ; (* Multiple assignment and comments *)
+terminator = ( ";" | "." ) ;
+assignment = ( "::=" | ":=" | "=" ) ;
+
+rule = ( lhs ,  assignment, rhs , terminator, [ comment ] ) ; (* Multiple assignment and comments *)
 statement = ( extensions | rules ) ; (* one line, maybe *)
 grammar = { ( comment | statement ) } ; (* Ultimate one: The grammar ruleset *)

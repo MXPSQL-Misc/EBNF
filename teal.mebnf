@@ -4,3 +4,4 @@
 @include "integer.ebnf"
 @include "isoebnf.ebnf"
 @include "bnf.ebnf"
+@include "log.ebnf"
